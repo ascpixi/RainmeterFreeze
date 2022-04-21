@@ -7,6 +7,7 @@ using RainmeterFreeze.Native;
 using RainmeterFreeze.Enumerations;
 using System.Text.Json;
 using RainmeterFreeze.Properties;
+using System.Threading;
 
 namespace RainmeterFreeze {
     /// <summary>
@@ -212,8 +213,14 @@ namespace RainmeterFreeze {
 
             // ...however, with the other algorithms, we have to perform additional
             // window checks.
-            if(configuration.FreezeAlgorithm == FreezeAlgorithm.Maximized)
+            if(configuration.FreezeAlgorithm == FreezeAlgorithm.Maximized) {
+                // Wait for any maximization animation to end.
+                // IsZoomed returns false when the maximize animation is playing,
+                // and when not given enough time for Rainmeter to process that
+                // its not in the foreground anymore, the widgets can stay on top.
+                Thread.Sleep(100);
                 return User32.IsZoomed(hwnd);
+            }
 
             if (configuration.FreezeAlgorithm == FreezeAlgorithm.FullScreen)
                 return ScreenInfo.IsForegroundFullScreen();
