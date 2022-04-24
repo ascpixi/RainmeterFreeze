@@ -52,7 +52,7 @@ namespace RainmeterFreeze.Native {
                     continue;
                 }
 
-                var suspendCount = 0;
+                int suspendCount;
                 do {
                     suspendCount = Kernel32.ResumeThread(pOpenThread);
                 } while (suspendCount > 0);
