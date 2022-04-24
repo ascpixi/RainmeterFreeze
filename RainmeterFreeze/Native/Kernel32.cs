@@ -5,9 +5,9 @@ namespace RainmeterFreeze.Native {
     /// <summary>
     /// Provides native methods from the KERNEL32 Dynamic Link Library.
     /// </summary>
-    public static class Kernel32 {
+    internal static class Kernel32 {
         [Flags]
-        public enum ThreadAccess : int {
+        internal enum ThreadAccess : int {
             /// <summary>
             /// Required to terminate a thread using TerminateThread.
             /// </summary>

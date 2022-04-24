@@ -10,21 +10,21 @@ namespace RainmeterFreeze.Native.Structures {
         /// <summary>
         /// Specifies the x-coordinate of the upper-left corner of the rectangle.
         /// </summary>
-        public int left;
+        internal int left;
 
         /// <summary>
         /// Specifies the y-coordinate of the upper-left corner of the rectangle.
         /// </summary>
-        public int top;
+        internal int top;
 
         /// <summary>
         /// Specifies the x-coordinate of the lower-right corner of the rectangle.
         /// </summary>
-        public int right;
+        internal int right;
 
         /// <summary>
         /// Specifies the y-coordinate of the lower-right corner of the rectangle.
         /// </summary>
-        public int bottom;
+        internal int bottom;
     }
 }

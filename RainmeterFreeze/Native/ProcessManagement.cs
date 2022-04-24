@@ -10,7 +10,7 @@ namespace RainmeterFreeze.Native {
         /// Suspends a process by its ID.
         /// </summary>
         /// <param name="pid">The target process's ID (PID).</param>
-        public static void SuspendProcess(int pid)
+        internal static void SuspendProcess(int pid)
         {
             var process = Process.GetProcessById(pid); // throws exception if process does not exist
 
@@ -34,7 +34,7 @@ namespace RainmeterFreeze.Native {
         /// Resumes a previously suspended process by its ID.
         /// </summary>
         /// <param name="pid">The target process's ID (PID).</param>
-        public static void ResumeProcess(int pid)
+        internal static void ResumeProcess(int pid)
         {
             var process = Process.GetProcessById(pid);
 
