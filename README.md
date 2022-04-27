@@ -1,5 +1,5 @@
 <h1 align="center">❄ RainmeterFreeze</h1>
-<p align="center">RainmeterFreeze is a lightweight app that freezes <a href="https://www.rainmeter.net/">Rainmeter</a> widgets when they're not visible to save CPU.</p>
+<p align="center">RainmeterFreeze is a lightweight app that freezes <a href="https://www.rainmeter.net/">Rainmeter</a> skins when they're not visible to save CPU.</p>
 
 ## 💻 Setup
 In order to run RainmeterFreeze, you'll need .NET Core 3.1 (or higher) - you probably already have it installed, but if you don't, you can get it from here: <a href="https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-3.1.24-windows-x64-installer">64-bit</a> | <a href="https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-3.1.24-windows-x86-installer">32-bit</a>
@@ -15,7 +15,7 @@ RainmeterFreeze creates a tray icon that you can right click to configure - you 
 2 modes that dictate *how* Rainmeter will be frozen.
 
 #### **Freeze when... (Algorithms)**
-- **Not on desktop** - if any window is in focus, Rainmeter will be frozen, even if the window itself does not cover the desktop. This can sometimes lead to glitchy behaviours with certain widgets.
+- **Not on desktop** - if any window is in focus, Rainmeter will be frozen, even if the window itself does not cover the desktop. This can sometimes lead to glitchy behaviours with certain skins.
 - **Foreground window is maximized** - if the window that is in focus is maximized, Rainmeter will be frozen. This is the default.
 - **When in full-screen mode** - Rainmeter will only be frozen if the window in focus covers the full area of the screen - for example, games running in full-screen mode.
 
