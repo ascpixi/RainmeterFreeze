@@ -279,8 +279,8 @@ namespace RainmeterFreeze {
             if (rainmeterPid == -1) return false;
 
             try {
-                Process.GetProcessById(rainmeterPid);
-                return true;
+                var process = Process.GetProcessById(rainmeterPid);
+                return !process.HasExited && process.ProcessName == "Rainmeter";
             } catch (ArgumentException) {
                 return false;
             }
