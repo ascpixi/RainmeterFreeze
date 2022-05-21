@@ -12,6 +12,7 @@
     <PackageProjectUrl>https://github.com/ascpixi/RainmeterFreeze</PackageProjectUrl>
     <RepositoryUrl>https://github.com/ascpixi/RainmeterFreeze</RepositoryUrl>
     <ApplicationIcon>Resources\Icon.ico</ApplicationIcon>
+    <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
 
   <ItemGroup>
