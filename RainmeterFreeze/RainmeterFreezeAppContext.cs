@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Linq;
 using System.Text;
-using System.Windows.Forms;
+using System.Text.Json;
+using System.Threading;
 using System.Diagnostics;
+using System.Windows.Forms;
 using RainmeterFreeze.Native;
 using RainmeterFreeze.Enumerations;
-using System.Text.Json;
-using RainmeterFreeze.Properties;
-using System.Threading;
 
 namespace RainmeterFreeze {
     /// <summary>
@@ -15,22 +14,34 @@ namespace RainmeterFreeze {
     /// </summary>
     public sealed class RainmeterFreezeAppContext : ApplicationContext {
         /// <summary>
+        /// Invoked when a property of a <see cref="RainmeterFreezeAppContext"/>
+        /// is changed.
+        /// </summary>
+        /// <param name="ctx">The app context in question.</param>
+        public delegate void ConfigurationChangedHandler(
+            RainmeterFreezeAppContext ctx
+        );
+
+        /// <summary>
         /// The configuration currently used by the application.
         /// </summary>
         public readonly AppConfiguration configuration;
 
         readonly User32.WinEventDelegate windowChangeHandler;
         readonly IntPtr windowChangeHookPtr;
+        readonly TrayIcon trayIcon;
 
-        readonly NotifyIcon trayIcon;
-        readonly ToolStripMenuItem algoNotOnDesktopToggle;
-        readonly ToolStripMenuItem algoMaximizedToggle;
-        readonly ToolStripMenuItem algoFullscreenToggle;
+        /// <summary>
+        /// Occurs when the freeze algorithm of this <see cref="RainmeterFreezeAppContext"/> has changed.
+        /// </summary>
+        public event ConfigurationChangedHandler FreezeAlgorithmChanged;
 
-        readonly ToolStripMenuItem modeSuspendToggle;
-        readonly ToolStripMenuItem modeLowPriorityToggle;
+        /// <summary>
+        /// Occurs when the freeze mode of this <see cref="RainmeterFreezeAppContext"/> has changed.
+        /// </summary>
+        public event ConfigurationChangedHandler FreezeModeChanged;
 
-        int rainmeterPid = -1;
+        int rainmeterPid = -1; // the current process ID of Rainmeter
 
         internal RainmeterFreezeAppContext()
         {
@@ -65,60 +76,7 @@ namespace RainmeterFreeze {
                 User32.WINEVENT_OUTOFCONTEXT
             );
 
-            algoNotOnDesktopToggle = new ToolStripMenuItem(
-                "Not on desktop",
-                null,
-                (s, e) => SetFreezeAlgorithm(FreezeAlgorithm.NotOnDesktop)
-            ) { Checked = configuration.FreezeAlgorithm == FreezeAlgorithm.NotOnDesktop };
-
-            algoMaximizedToggle = new ToolStripMenuItem(
-                "Foreground window is maximized",
-                null,
-                (s, e) => SetFreezeAlgorithm(FreezeAlgorithm.Maximized)
-            ) { Checked = configuration.FreezeAlgorithm == FreezeAlgorithm.Maximized };
-
-            algoFullscreenToggle = new ToolStripMenuItem(
-                "When in full-screen mode",
-                null,
-                (s, e) => SetFreezeAlgorithm(FreezeAlgorithm.FullScreen)
-            ) { Checked = configuration.FreezeAlgorithm == FreezeAlgorithm.FullScreen };
-
-            modeSuspendToggle = new ToolStripMenuItem(
-                "Suspend",
-                null,
-                (s, e) => SetFreezeMode(FreezeMode.Suspend)
-            ) { Checked = configuration.FreezeMode == FreezeMode.Suspend };     
-            
-            modeLowPriorityToggle = new ToolStripMenuItem(
-                "Low Priority",
-                null,
-                (s, e) => SetFreezeMode(FreezeMode.LowPriority)
-            ) { Checked = configuration.FreezeMode == FreezeMode.LowPriority };
-
-            trayIcon = new NotifyIcon() {
-                Icon = Resources.Icon,
-                ContextMenuStrip = new ContextMenuStrip() {
-                    Items = {
-                        new ToolStripMenuItem("Freeze when...") {
-                            Enabled = false
-                        },
-                        algoNotOnDesktopToggle,
-                        algoMaximizedToggle,
-                        algoFullscreenToggle,
-                        new ToolStripSeparator(),
-
-                        new ToolStripMenuItem("Mode") {
-                            Enabled = false
-                        },
-                        modeSuspendToggle,
-                        modeLowPriorityToggle,
-                        new ToolStripSeparator(),
-
-                        new ToolStripMenuItem("Exit", null, (s, e) => Exit())
-                    }
-                },
-                Visible = true
-            };
+            trayIcon = new TrayIcon(this);
         }
 
         static void PerformAlreadyRunningCheck()
@@ -144,11 +102,8 @@ namespace RainmeterFreeze {
         /// <param name="algorithm">The target algorithm to use.</param>
         public void SetFreezeAlgorithm(FreezeAlgorithm algorithm)
         {
-            algoNotOnDesktopToggle.Checked = algorithm == FreezeAlgorithm.NotOnDesktop;
-            algoMaximizedToggle.Checked = algorithm == FreezeAlgorithm.Maximized;
-            algoFullscreenToggle.Checked = algorithm == FreezeAlgorithm.FullScreen;
-            
             configuration.FreezeAlgorithm = algorithm;
+            FreezeAlgorithmChanged(this);
             configuration.Save();
         }
 
@@ -162,10 +117,8 @@ namespace RainmeterFreeze {
                 Unfreeze();
             }
 
-            modeSuspendToggle.Checked = mode == FreezeMode.Suspend;
-            modeLowPriorityToggle.Checked = mode == FreezeMode.LowPriority;
-
             configuration.FreezeMode = mode;
+            FreezeModeChanged(this);
             configuration.Save();
 
             if (CheckIfShouldFreeze()) {
@@ -314,7 +267,8 @@ namespace RainmeterFreeze {
         /// </summary>
         public void Exit()
         {
-            trayIcon.Visible = false;
+            trayIcon.Icon.Visible = false;
+            trayIcon.Icon.Dispose();
             User32.UnhookWinEvent(windowChangeHookPtr);
 
             if (ValidateRainmeterPid()) {
