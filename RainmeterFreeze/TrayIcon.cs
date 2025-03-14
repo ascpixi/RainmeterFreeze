@@ -2,107 +2,106 @@
 using RainmeterFreeze.Properties;
 using RainmeterFreeze.Enumerations;
 
-namespace RainmeterFreeze {
+namespace RainmeterFreeze;
+
+/// <summary>
+/// Handles the RainmeterFreeze tray icon.
+/// </summary>
+public class TrayIcon
+{
+    readonly NotifyIcon trayIcon;
+    readonly ToolStripMenuItem algoNotOnDesktopToggle;
+    readonly ToolStripMenuItem algoMaximizedToggle;
+    readonly ToolStripMenuItem algoFullscreenToggle;
+
+    readonly ToolStripMenuItem modeSuspendToggle;
+    readonly ToolStripMenuItem modeLowPriorityToggle;
+
     /// <summary>
-    /// Handles the RainmeterFreeze tray icon.
+    /// The actual icon displayed in the tray.
     /// </summary>
-    public class TrayIcon {
-        readonly NotifyIcon trayIcon;
-        readonly ToolStripMenuItem algoNotOnDesktopToggle;
-        readonly ToolStripMenuItem algoMaximizedToggle;
-        readonly ToolStripMenuItem algoFullscreenToggle;
+    public NotifyIcon Icon => trayIcon;
 
-        readonly ToolStripMenuItem modeSuspendToggle;
-        readonly ToolStripMenuItem modeLowPriorityToggle;
+    /// <summary>
+    /// Creates a new tray icon, belonging to the specified application context.
+    /// </summary>
+    /// <param name="owner">The owner of this tray icon.</param>
+    public TrayIcon(RainmeterFreezeAppContext owner)
+    {
+        algoNotOnDesktopToggle = new ToolStripMenuItem(
+            "Not on desktop",
+            null,
+            (_, _) => owner.SetFreezeAlgorithm(FreezeAlgorithm.NotOnDesktop)
+        ) { Checked = owner.Configuration.FreezeAlgorithm == FreezeAlgorithm.NotOnDesktop };
 
-        /// <summary>
-        /// The actual icon displayed in the tray.
-        /// </summary>
-        public NotifyIcon Icon => trayIcon;
+        algoMaximizedToggle = new ToolStripMenuItem(
+            "Foreground window is maximized",
+            null,
+            (_, _) => owner.SetFreezeAlgorithm(FreezeAlgorithm.Maximized)
+        ) { Checked = owner.Configuration.FreezeAlgorithm == FreezeAlgorithm.Maximized };
 
-        /// <summary>
-        /// Creates a new tray icon, belonging to the specified application context.
-        /// </summary>
-        /// <param name="owner">The owner of this tray icon.</param>
-        public TrayIcon(RainmeterFreezeAppContext owner)
-        {
-            algoNotOnDesktopToggle = new ToolStripMenuItem(
-                "Not on desktop",
-                null,
-                (s, e) => owner.SetFreezeAlgorithm(FreezeAlgorithm.NotOnDesktop)
-            ) { Checked = owner.configuration.FreezeAlgorithm == FreezeAlgorithm.NotOnDesktop };
+        algoFullscreenToggle = new ToolStripMenuItem(
+            "When in full-screen mode",
+            null,
+            (_, _) => owner.SetFreezeAlgorithm(FreezeAlgorithm.FullScreen)
+        ) { Checked = owner.Configuration.FreezeAlgorithm == FreezeAlgorithm.FullScreen };
 
-            algoMaximizedToggle = new ToolStripMenuItem(
-                "Foreground window is maximized",
-                null,
-                (s, e) => owner.SetFreezeAlgorithm(FreezeAlgorithm.Maximized)
-            ) { Checked = owner.configuration.FreezeAlgorithm == FreezeAlgorithm.Maximized };
+        modeSuspendToggle = new ToolStripMenuItem(
+            "Suspend",
+            null,
+            (_, _) => owner.SetFreezeMode(FreezeMode.Suspend)
+        ) { Checked = owner.Configuration.FreezeMode == FreezeMode.Suspend };
 
-            algoFullscreenToggle = new ToolStripMenuItem(
-                "When in full-screen mode",
-                null,
-                (s, e) => owner.SetFreezeAlgorithm(FreezeAlgorithm.FullScreen)
-            ) { Checked = owner.configuration.FreezeAlgorithm == FreezeAlgorithm.FullScreen };
+        modeLowPriorityToggle = new ToolStripMenuItem(
+            "Low Priority",
+            null,
+            (_, _) => owner.SetFreezeMode(FreezeMode.LowPriority)
+        ) { Checked = owner.Configuration.FreezeMode == FreezeMode.LowPriority };
 
-            modeSuspendToggle = new ToolStripMenuItem(
-                "Suspend",
-                null,
-                (s, e) => owner.SetFreezeMode(FreezeMode.Suspend)
-            ) { Checked = owner.configuration.FreezeMode == FreezeMode.Suspend };
+        trayIcon = new() {
+            Icon = Resources.Icon,
+            ContextMenuStrip = new() {
+                Items = {
+                    new ToolStripMenuItem("Freeze when...") { Enabled = false },
+                    algoNotOnDesktopToggle,
+                    algoMaximizedToggle,
+                    algoFullscreenToggle,
 
-            modeLowPriorityToggle = new ToolStripMenuItem(
-                "Low Priority",
-                null,
-                (s, e) => owner.SetFreezeMode(FreezeMode.LowPriority)
-            ) { Checked = owner.configuration.FreezeMode == FreezeMode.LowPriority };
+                    new ToolStripSeparator(),
 
-            trayIcon = new NotifyIcon() {
-                Icon = Resources.Icon,
-                ContextMenuStrip = new ContextMenuStrip() {
-                    Items = {
-                        new ToolStripMenuItem("Freeze when...") {
-                            Enabled = false
-                        },
-                        algoNotOnDesktopToggle,
-                        algoMaximizedToggle,
-                        algoFullscreenToggle,
-                        new ToolStripSeparator(),
+                    new ToolStripMenuItem("Mode") { Enabled = false },
+                    modeSuspendToggle,
+                    modeLowPriorityToggle,
+                    
+                    new ToolStripSeparator(),
 
-                        new ToolStripMenuItem("Mode") {
-                            Enabled = false
-                        },
-                        modeSuspendToggle,
-                        modeLowPriorityToggle,
-                        new ToolStripSeparator(),
+                    new ToolStripMenuItem("Exit", null, (s, e) => owner.Exit())
+                }
+            },
+            Visible = true
+        };
 
-                        new ToolStripMenuItem("Exit", null, (s, e) => owner.Exit())
-                    }
-                },
-                Visible = true
-            };
+        AttachEvents(owner);
+    }
 
-            AttachEvents(owner);
-        }
-    
-        private void AttachEvents(RainmeterFreezeAppContext target)
-        {
-            target.FreezeModeChanged += OnFreezeModeChanged;
-            target.FreezeAlgorithmChanged += OnFreezeAlgorithmChanged;
-        }
+    private void AttachEvents(RainmeterFreezeAppContext target)
+    {
+        target.FreezeModeChanged += OnFreezeModeChanged;
+        target.FreezeAlgorithmChanged += OnFreezeAlgorithmChanged;
+    }
 
-        private void OnFreezeAlgorithmChanged(RainmeterFreezeAppContext ctx)
-        {
-            var config = ctx.configuration;
-            algoNotOnDesktopToggle.Checked = config.FreezeAlgorithm == FreezeAlgorithm.NotOnDesktop;
-            algoMaximizedToggle.Checked = config.FreezeAlgorithm == FreezeAlgorithm.Maximized;
-            algoFullscreenToggle.Checked = config.FreezeAlgorithm == FreezeAlgorithm.FullScreen;
-        }
+    private void OnFreezeAlgorithmChanged(RainmeterFreezeAppContext ctx)
+    {
+        var config = ctx.Configuration;
+        algoNotOnDesktopToggle.Checked = config.FreezeAlgorithm == FreezeAlgorithm.NotOnDesktop;
+        algoMaximizedToggle.Checked = config.FreezeAlgorithm == FreezeAlgorithm.Maximized;
+        algoFullscreenToggle.Checked = config.FreezeAlgorithm == FreezeAlgorithm.FullScreen;
+    }
 
-        private void OnFreezeModeChanged(RainmeterFreezeAppContext ctx)
-        {
-            var config = ctx.configuration;
-            modeSuspendToggle.Checked = config.FreezeMode == FreezeMode.Suspend;
-            modeLowPriorityToggle.Checked = config.FreezeMode == FreezeMode.LowPriority;
-        }
+    private void OnFreezeModeChanged(RainmeterFreezeAppContext ctx)
+    {
+        var config = ctx.Configuration;
+        modeSuspendToggle.Checked = config.FreezeMode == FreezeMode.Suspend;
+        modeLowPriorityToggle.Checked = config.FreezeMode == FreezeMode.LowPriority;
     }
 }
