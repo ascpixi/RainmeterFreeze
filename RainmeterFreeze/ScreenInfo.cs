@@ -1,5 +1,4 @@
-﻿using System.Windows.Forms;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using RainmeterFreeze.Native;
 using RainmeterFreeze.Native.Structures;
 
@@ -18,11 +17,24 @@ public static class ScreenInfo
         var rect = new RECT();
         nint hWnd = User32.GetForegroundWindow();
 
-        User32.GetWindowRect(new HandleRef(null, hWnd), ref rect);
+        if (!User32.GetWindowRect(new HandleRef(null, hWnd), ref rect))
+            return false;
+
+        nint monitor = User32.MonitorFromWindow(hWnd, MonitorFromWindowFlags.DefaultToNearest);
+        if (monitor == 0)
+            return false;
+
+        var monitorInfo = new MonitorInfo();
+        if (!User32.GetMonitorInfo(monitor, ref monitorInfo))
+            return false;
+
+        var monitorRect = monitorInfo.Monitor;
 
         return (
-            Screen.PrimaryScreen.Bounds.Width == (rect.Right - rect.Left) &&
-            Screen.PrimaryScreen.Bounds.Height == (rect.Bottom - rect.Top)
+            rect.Left == monitorRect.Left &&
+            rect.Top == monitorRect.Top &&
+            rect.Right == monitorRect.Right &&
+            rect.Bottom == monitorRect.Bottom
         );
     }
 }

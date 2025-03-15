@@ -2,6 +2,9 @@
 using System.Text;
 using System.Runtime.InteropServices;
 using RainmeterFreeze.Native.Structures;
+using RainmeterFreeze.Native.Enumerations;
+
+using DialogResult = RainmeterFreeze.Native.Enumerations.DialogResult;
 
 namespace RainmeterFreeze.Native;
 
@@ -160,4 +163,31 @@ internal static class User32
         HandleRef hWnd,
         [In, Out] ref RECT rect
     );
+
+    [DllImport("user32.dll")]
+    internal static extern DialogResult MessageBox(
+        nint hWnd,
+        string lpText,
+        string lpCaption,
+        MessageBoxType type
+    );
+
+    [DllImport("user32.dll")]
+    internal static extern nint MonitorFromWindow(
+        nint hwnd,
+        MonitorFromWindowFlags dwFlags
+    );
+
+    [DllImport("user32.dll")]
+    internal static extern bool GetMonitorInfo(
+        nint hMonitor,
+        ref MonitorInfo lpmi
+    );
+}
+
+enum MonitorFromWindowFlags
+{
+    DefaultToNull,
+    DefaultToPrimary,
+    DefaultToNearest,
 }

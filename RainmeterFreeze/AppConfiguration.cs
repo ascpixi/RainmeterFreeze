@@ -1,10 +1,19 @@
-﻿using System;
-using System.IO;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using RainmeterFreeze.Enumerations;
 
 namespace RainmeterFreeze;
+
+[JsonSourceGenerationOptions(
+    WriteIndented = true,
+    UseStringEnumConverter = true,
+    AllowTrailingCommas = true,
+    IgnoreReadOnlyProperties = true,
+    PropertyNameCaseInsensitive = true,
+    ReadCommentHandling = JsonCommentHandling.Skip
+)]
+[JsonSerializable(typeof(AppConfiguration))]
+partial class JsonContext : JsonSerializerContext;
 
 /// <summary>
 /// Represents the configuration file of RainmeterFreeze.
@@ -13,15 +22,6 @@ namespace RainmeterFreeze;
 public class AppConfiguration
 {
     public static readonly string ConfigPath = $"{Program.DataFolderPath}\\config.json";
-
-    private static readonly JsonSerializerOptions jsonOptions = new() {
-        WriteIndented = true,
-        IgnoreReadOnlyProperties = true,
-        Converters = {
-            new JsonStringEnumConverter()
-        },
-        PropertyNameCaseInsensitive = true,
-    };
 
     /// <summary>
     /// The freezing algorithm to use.
@@ -38,7 +38,7 @@ public class AppConfiguration
     /// </summary>
     public void Save()
     {
-        string json = JsonSerializer.Serialize(this, jsonOptions);
+        string json = JsonSerializer.Serialize(this, JsonContext.Default.AppConfiguration);
         File.WriteAllText(ConfigPath, json);
     }
 
@@ -52,7 +52,7 @@ public class AppConfiguration
     {
         if (File.Exists(ConfigPath)) {
             string json = File.ReadAllText(ConfigPath);
-            return JsonSerializer.Deserialize<AppConfiguration>(json, jsonOptions);
+            return JsonSerializer.Deserialize(json, JsonContext.Default.AppConfiguration);
         }
 
         return new();
