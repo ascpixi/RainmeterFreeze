@@ -178,6 +178,9 @@ static class Program
 
     static void Freeze()
     {
+        if (!RefreshRainmeterPid())
+            return;
+
         switch (Configuration.FreezeMode) {
             case FreezeMode.Suspend: {
                 ProcessManagement.SuspendProcess(rainmeterPid);
@@ -193,6 +196,9 @@ static class Program
 
     static void Unfreeze()
     {
+        if (!RefreshRainmeterPid())
+            return;
+
         switch (Configuration.FreezeMode) {
             case FreezeMode.Suspend: {
                 ProcessManagement.ResumeProcess(rainmeterPid);
@@ -241,7 +247,7 @@ static class Program
     /// <summary>
     /// Refreshes the stored Rainmeter process ID, if necessary.
     /// </summary>
-    /// <returns>Whether the process ID was successfully fetched, or if a refresh is not required at the given time.</returns>
+    /// <returns>'true' if the process ID was successfully fetched, or if a refresh is not required at the given time.</returns>
     static bool RefreshRainmeterPid()
     {
         if (ValidateRainmeterPid())
