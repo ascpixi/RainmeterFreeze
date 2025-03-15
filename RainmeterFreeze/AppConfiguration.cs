@@ -21,7 +21,7 @@ partial class JsonContext : JsonSerializerContext;
 [Serializable]
 public class AppConfiguration
 {
-    public static readonly string ConfigPath = $"{Program.DataFolderPath}\\config.json";
+    public static readonly string ConfigPath = Path.Combine(Program.DataFolderPath, "config.json");
 
     /// <summary>
     /// The freezing algorithm to use.

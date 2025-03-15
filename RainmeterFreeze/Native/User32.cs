@@ -1,17 +1,14 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 using System.Runtime.InteropServices;
 using RainmeterFreeze.Native.Structures;
 using RainmeterFreeze.Native.Enumerations;
-
-using DialogResult = RainmeterFreeze.Native.Enumerations.DialogResult;
 
 namespace RainmeterFreeze.Native;
 
 /// <summary>
 /// Provides native methods from the USER32 Dynamic Link Library.
 /// </summary>
-internal static class User32
+static class User32
 {
     /// <summary>
     /// An application-defined callback (or hook) function that the system calls

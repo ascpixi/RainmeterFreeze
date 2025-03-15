@@ -5,7 +5,7 @@ namespace RainmeterFreeze.Native;
 /// <summary>
 /// Provides additional methods in order to help with process management.
 /// </summary>
-internal static class ProcessManagement
+static class ProcessManagement
 {
     /// <summary>
     /// Suspends a process by its ID.
