@@ -12,6 +12,7 @@
 
   <PropertyGroup>
     <Authors>ascpixi</Authors>
+    <Version>1.1.0</Version>
     <PackageProjectUrl>https://github.com/ascpixi/RainmeterFreeze</PackageProjectUrl>
     <RepositoryUrl>https://github.com/ascpixi/RainmeterFreeze</RepositoryUrl>
     <NeutralLanguage>en</NeutralLanguage>
