@@ -16,6 +16,7 @@
     <RepositoryUrl>https://github.com/ascpixi/RainmeterFreeze</RepositoryUrl>
     <NeutralLanguage>en</NeutralLanguage>
     <ApplicationIcon>Resources\Icon.ico</ApplicationIcon>
+    <ApplicationManifest>RainmeterFreeze.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <PropertyGroup>
