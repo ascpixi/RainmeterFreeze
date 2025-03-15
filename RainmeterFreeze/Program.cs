@@ -37,12 +37,19 @@ static class Program
 
         PerformAlreadyRunningCheck();
 
+
         try {
             Configuration = AppConfiguration.Load();
         } catch (JsonException ex) {
             var dr = User32.MessageBox(
                 default,
-                $"The RainmeterFreeze configuration file is corrupted and cannot be parsed.\n\n{ex.Message}\n\nDo you wish to reset the configuration file and continue, or cancel and exit the application?",
+                $"""
+                The RainmeterFreeze configuration file is corrupted and cannot be parsed.
+                
+                {ex.Message}
+                
+                Do you wish to reset the configuration file and continue, or cancel and exit the application?
+                """,
                 "RainmeterFreeze Configuration Error",
                 MessageBoxType.OKCancel | MessageBoxType.IconError
             );
@@ -297,23 +304,58 @@ static class Program
 
         if(e.ExceptionObject is Exception ex) {
             try {
-                File.WriteAllText(StacktraceLogPath, $"A fatal exception has been thrown and the application cannot continue.\n\n{ex.GetType()}: {ex.Message}\n{ex.StackTrace}");
+                File.WriteAllText(
+                    StacktraceLogPath,
+                    $"""
+                    A fatal exception has been thrown and the application cannot continue.
+                    
+                    {ex.GetType()}: {ex.Message}
+                    {ex.StackTrace}
+                    """
+                );
             }
             catch (Exception dumpErr) {
                 User32.MessageBox(
                     default,
-                    $"A fatal exception occured which could not be dumped to a file.\n{ex.GetType()}: {ex.Message}\n{ex.StackTrace}\n\nThe following exception occurred while attempting to dump the information to a file:\n{dumpErr.GetType()}: {dumpErr.Message}\n{dumpErr.StackTrace}",
+                    $"""
+                    A fatal exception occured which could not be dumped to a file.
+                    
+                    {ex.GetType()}: {ex.Message}
+                    {ex.StackTrace}
+                    
+                    The following exception occurred while attempting to dump the information to a file:
+                    
+                    {dumpErr.GetType()}: {dumpErr.Message}
+                    {dumpErr.StackTrace}
+                    """,
                     "RainmeterFreeze",
                     MessageBoxType.OK | MessageBoxType.IconError
                 );
             }
         } else {
             try {
-                File.WriteAllText(StacktraceLogPath, $"An unknown fatal exception has been thrown and the application cannot continue.\n\nException type: {e.ExceptionObject.GetType()}\nException: {e.ExceptionObject}");
+                File.WriteAllText(
+                    StacktraceLogPath,
+                    $"""
+                    An unknown fatal exception has been thrown and the application cannot continue.
+                    
+                    Exception type: {e.ExceptionObject.GetType()}
+                    Exception: {e.ExceptionObject}
+                    """
+                );
             } catch (Exception dumpErr) {
                 User32.MessageBox(
                     default,
-                    $"A fatal exception occured which could not be dumped to a file.\n\n{e.ExceptionObject.GetType()}: {e.ExceptionObject}\n\nThe following exception occurred while attempting to dump the information to a file:\n{dumpErr.GetType()}: {dumpErr.Message}\n{dumpErr.StackTrace}",
+                    $"""
+                    A fatal exception occured which could not be dumped to a file.
+                    
+                    {e.ExceptionObject.GetType()}: {e.ExceptionObject}
+                    
+                    The following exception occurred while attempting to dump the information to a file:
+                    
+                    {dumpErr.GetType()}: {dumpErr.Message}
+                    {dumpErr.StackTrace}
+                    """,
                     "RainmeterFreeze",
                     MessageBoxType.OK | MessageBoxType.IconError
                 );
