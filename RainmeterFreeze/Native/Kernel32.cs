@@ -6,7 +6,7 @@ namespace RainmeterFreeze.Native;
 /// <summary>
 /// Provides native methods from the KERNEL32 Dynamic Link Library.
 /// </summary>
-static class Kernel32
+static partial class Kernel32
 {
     [Flags]
     internal enum ThreadAccess : int
@@ -64,10 +64,10 @@ static class Kernel32
     /// <param name="bInheritHandle">If this value is TRUE, processes created by this process will inherit the handle. Otherwise, the processes do not inherit this handle.</param>
     /// <param name="dwThreadId">The identifier of the thread to be opened.</param>
     /// <returns>If the function succeeds, the return value is an open handle to the specified thread. If the function fails, the return value is NULL.</returns>
-    [DllImport("kernel32.dll")]
-    internal static extern IntPtr OpenThread(
+    [LibraryImport("kernel32.dll")]
+    internal static partial IntPtr OpenThread(
         ThreadAccess dwDesiredAccess,
-        bool bInheritHandle,
+        [MarshalAs(UnmanagedType.Bool)] bool bInheritHandle,
         uint dwThreadId
     );
 
@@ -77,8 +77,8 @@ static class Kernel32
     /// </summary>
     /// <param name="hThread">A handle to the thread that is to be suspended. The handle must have the <see cref="ThreadAccess.SuspendResume"/> access right.</param>
     /// <returns></returns>
-    [DllImport("kernel32.dll")]
-    internal static extern uint SuspendThread(nint hThread);
+    [LibraryImport("kernel32.dll")]
+    internal static partial uint SuspendThread(nint hThread);
 
     /// <summary>
     /// Decrements a thread's suspend count. When the suspend count
@@ -86,14 +86,15 @@ static class Kernel32
     /// </summary>
     /// <param name="hThread">A handle to the thread to be restarted. The handle must have the <see cref="ThreadAccess.SuspendResume"/> access right.</param>
     /// <returns>If the function succeeds, the return value is the thread's previous suspend count. If the function fails, the return value is (DWORD) -1. To get extended error information, call GetLastError.</returns>
-    [DllImport("kernel32.dll")]
-    internal static extern int ResumeThread(nint hThread);
+    [LibraryImport("kernel32.dll")]
+    internal static partial int ResumeThread(nint hThread);
 
     /// <summary>
     /// Closes an open object handle.
     /// </summary>
     /// <param name="handle">A valid handle to an open object.</param>
     /// <returns>If the function succeeds, the return value is nonzero. If the function fails, the return value is zero. To get extended error information, call GetLastError.</returns>
-    [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    internal static extern bool CloseHandle(nint handle);
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool CloseHandle(nint handle);
 }

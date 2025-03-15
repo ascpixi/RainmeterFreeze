@@ -17,7 +17,7 @@ public static class ScreenInfo
         var rect = new Rect();
         nint hWnd = User32.GetForegroundWindow();
 
-        if (!User32.GetWindowRect(new HandleRef(null, hWnd), ref rect))
+        if (!User32.GetWindowRect(hWnd, ref rect))
             return false;
 
         nint monitor = User32.MonitorFromWindow(hWnd, MonitorFromWindowFlags.DefaultToNearest);

@@ -132,10 +132,10 @@ static class Program
             return false;
         }
 
-        var className = new StringBuilder(32);
-        User32.GetClassName(hwnd, className, className.Capacity);
+        Span<char> className = stackalloc char[32];
+        User32.GetClassName(hwnd, className);
 
-        switch (className.ToString()) {
+        switch (className) {
             case "WorkerW":
             case "SysListView32":
             case "SHELLDLL_DefView":

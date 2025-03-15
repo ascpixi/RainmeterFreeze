@@ -8,7 +8,7 @@ namespace RainmeterFreeze.Native;
 /// <summary>
 /// Provides native methods from the USER32 Dynamic Link Library.
 /// </summary>
-static class User32
+static partial class User32
 {
     /// <summary>
     /// An application-defined callback (or hook) function that the system calls
@@ -55,8 +55,8 @@ static class User32
     /// <param name="idThread">Specifies the ID of the thread from which the hook function receives events. If this parameter is zero, the hook function is associated with all existing threads on the current desktop.</param>
     /// <param name="dwFlags">Flag values that specify the location of the hook function and of the events to be skipped.</param>
     /// <returns></returns>
-    [DllImport("user32.dll")]
-    internal static extern nint SetWinEventHook(
+    [LibraryImport("user32.dll")]
+    internal static partial nint SetWinEventHook(
         uint eventMin,
         uint eventMax,
         nint hmodWinEventProc,
@@ -71,8 +71,9 @@ static class User32
     /// </summary>
     /// <param name="hWinEventHook">Handle to the event hook returned in the previous call to SetWinEventHook.</param>
     /// <returns>If successful, returns TRUE; otherwise, returns FALSE.</returns>
-    [DllImport("user32.dll")]
-    internal static extern bool UnhookWinEvent(nint hWinEventHook);
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool UnhookWinEvent(nint hWinEventHook);
 
     /// <summary>
     /// Retrieves a handle to the foreground window (the window with which the
@@ -80,8 +81,8 @@ static class User32
     /// to the thread that creates the foreground window than it does to other threads.
     /// </summary>
     /// <returns>The return value is a handle to the foreground window. The foreground window can be NULL in certain circumstances, such as when a window is losing activation.</returns>
-    [DllImport("user32.dll")]
-    internal static extern nint GetForegroundWindow();
+    [LibraryImport("user32.dll")]
+    internal static partial nint GetForegroundWindow();
 
     /// <summary>
     /// Retrieves a handle to the desktop window. The desktop window
@@ -89,15 +90,15 @@ static class User32
     /// of which other windows are painted.
     /// </summary>
     /// <returns>The return value is a handle to the desktop window.</returns>
-    [DllImport("user32.dll")]
-    internal static extern nint GetDesktopWindow();
+    [LibraryImport("user32.dll")]
+    internal static partial nint GetDesktopWindow();
 
     /// <summary>
     /// Retrieves a handle to the Shell's desktop window.
     /// </summary>
     /// <returns>The return value is the handle of the Shell's desktop window. If no Shell process is present, the return value is NULL.</returns>
-    [DllImport("user32.dll")]
-    internal static extern nint GetShellWindow();
+    [LibraryImport("user32.dll")]
+    internal static partial nint GetShellWindow();
 
     /// <summary>
     /// Retrieves a handle to the top-level window whose class name and window name match the specified strings. This function does not search child windows.
@@ -106,10 +107,17 @@ static class User32
     /// <param name="lpClassName">The class name or a class atom created by a previous call to the RegisterClass or RegisterClassEx function. The atom must be in the low-order word of lpClassName; the high-order word must be zero.</param>
     /// <param name="lpWindowName">The window name (the window's title). If this parameter is NULL, all window names match.</param>
     /// <returns>If the function succeeds, the return value is a handle to the window that has the specified class name and window name. If the function fails, the return value is NULL.</returns>
-    [DllImport("user32.dll")]
-    internal static extern nint FindWindow(
+    [LibraryImport("user32.dll", EntryPoint = "FindWindowW", StringMarshalling = StringMarshalling.Utf16)]
+    internal static partial nint FindWindow(
         string lpClassName,
         string? lpWindowName
+    );
+
+    [LibraryImport("user32.dll", EntryPoint = "GetClassNameW", StringMarshalling = StringMarshalling.Utf16)]
+    private static unsafe partial int GetClassName(
+        nint hWnd,
+        char* lpClassName,
+        int nMaxCount
     );
 
     /// <summary>
@@ -117,14 +125,13 @@ static class User32
     /// </summary>
     /// <param name="hWnd">A handle to the window and, indirectly, the class to which the window belongs.</param>
     /// <param name="lpClassName">The class name string.</param>
-    /// <param name="nMaxCount">The length of the lpClassName buffer, in characters. The buffer must be large enough to include the terminating null character; otherwise, the class name string is truncated to nMaxCount-1 characters.</param>
     /// <returns>If the function succeeds, the return value is the number of characters copied to the buffer, not including the terminating null character. If the function fails, the return value is zero.</returns>
-    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-    internal static extern int GetClassName(
-        nint hWnd,
-        StringBuilder lpClassName,
-        int nMaxCount
-    );
+    internal static unsafe int GetClassName(nint hWnd, Span<char> lpClassName)
+    {
+        fixed (char* ptr = lpClassName) {
+            return GetClassName(hWnd, ptr, lpClassName.Length - 1);
+        }
+    }
 
     /// <summary>
     /// Retrieves the identifier of the thread that created the specified
@@ -134,8 +141,8 @@ static class User32
     /// <param name="hWnd">A handle to the window.</param>
     /// <param name="processId">A pointer to a variable that receives the process identifier. If this parameter is not NULL, GetWindowThreadProcessId copies the identifier of the process to the variable; otherwise, it does not.</param>
     /// <returns>The return value is the identifier of the thread that created the window.</returns>
-    [DllImport("user32.dll", SetLastError = true)]
-    internal static extern uint GetWindowThreadProcessId(
+    [LibraryImport("user32.dll", SetLastError = true)]
+    internal static partial uint GetWindowThreadProcessId(
         nint hWnd,
         out uint processId
     );
@@ -144,8 +151,9 @@ static class User32
     /// Determines whether a window is maximized.
     /// </summary>
     /// <param name="hWnd">A handle to the window to be tested.</param>
-    [DllImport("user32.dll")]
-    internal static extern bool IsZoomed(nint hWnd);
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool IsZoomed(nint hWnd);
 
     /// <summary>
     /// Retrieves the dimensions of the bounding rectangle of the specified
@@ -155,28 +163,44 @@ static class User32
     /// <param name="hWnd">A handle to the window.</param>
     /// <param name="rect">A pointer to a RECT structure that receives the screen coordinates of the upper-left and lower-right corners of the window.</param>
     /// <returns>If the function succeeds, the return value is nonzero. If the function fails, the return value is zero.</returns>
-    [DllImport("user32.dll")]
-    internal static extern bool GetWindowRect(
-        HandleRef hWnd,
-        [In, Out] ref Rect rect
-    );
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool GetWindowRect(nint hWnd, ref Rect rect);
 
-    [DllImport("user32.dll")]
-    internal static extern DialogResult MessageBox(
+    /// <summary>
+    /// Displays a modal dialog box that contains a system icon, a set of buttons, and a brief application-specific message, such as status or error information. The message box returns an integer value that indicates which button the user clicked.
+    /// </summary>
+    /// <param name="hWnd">A handle to the owner window of the message box to be created. If this parameter is NULL, the message box has no owner window.</param>
+    /// <param name="lpText">The message to be displayed. If the string consists of more than one line, you can separate the lines using a carriage return and/or linefeed character between each line.</param>
+    /// <param name="lpCaption">The dialog box title. If this parameter is NULL, the default title is Error.</param>
+    /// <param name="type">The contents and behavior of the dialog box.</param>
+    [LibraryImport("user32.dll", StringMarshalling = StringMarshalling.Utf16)]
+    internal static partial DialogResult MessageBox(
         nint hWnd,
         string lpText,
         string lpCaption,
         MessageBoxType type
     );
 
-    [DllImport("user32.dll")]
-    internal static extern nint MonitorFromWindow(
+    /// <summary>
+    /// The MonitorFromWindow function retrieves a handle to the display monitor that has the largest area of intersection with the bounding rectangle of a specified window.
+    /// </summary>
+    /// <param name="hwnd">A handle to the window of interest.</param>
+    /// <param name="dwFlags">Determines the function's return value if the window does not intersect any display monitor.</param>
+    [LibraryImport("user32.dll")]
+    internal static partial nint MonitorFromWindow(
         nint hwnd,
         MonitorFromWindowFlags dwFlags
     );
 
-    [DllImport("user32.dll")]
-    internal static extern bool GetMonitorInfo(
+    /// <summary>
+    /// The GetMonitorInfo function retrieves information about a display monitor.
+    /// </summary>
+    /// <param name="hMonitor">A handle to the display monitor of interest.</param>
+    /// <param name="lpmi">A pointer to a MONITORINFO or MONITORINFOEX structure that receives information about the specified display monitor.</param>
+    [LibraryImport("user32.dll", EntryPoint = "GetMonitorInfoA")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool GetMonitorInfo(
         nint hMonitor,
         ref MonitorInfo lpmi
     );
