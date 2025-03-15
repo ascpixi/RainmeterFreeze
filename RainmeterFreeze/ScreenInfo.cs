@@ -14,7 +14,7 @@ public static class ScreenInfo
     /// </summary>
     public static bool IsForegroundFullScreen()
     {
-        var rect = new RECT();
+        var rect = new Rect();
         nint hWnd = User32.GetForegroundWindow();
 
         if (!User32.GetWindowRect(new HandleRef(null, hWnd), ref rect))

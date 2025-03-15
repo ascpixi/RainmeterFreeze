@@ -161,7 +161,7 @@ internal static class User32
     [DllImport("user32.dll")]
     internal static extern bool GetWindowRect(
         HandleRef hWnd,
-        [In, Out] ref RECT rect
+        [In, Out] ref Rect rect
     );
 
     [DllImport("user32.dll")]

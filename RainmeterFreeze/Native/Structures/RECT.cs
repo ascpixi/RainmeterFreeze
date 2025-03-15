@@ -3,11 +3,11 @@
 namespace RainmeterFreeze.Native.Structures;
 
 /// <summary>
-/// The <see cref="RECT"/> structure defines a rectangle by the coordinates
+/// The <see cref="Rect"/> structure defines a rectangle by the coordinates
 /// of its upper-left and lower-right corners.
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
-internal struct RECT
+internal struct Rect
 {
     /// <summary>
     /// Specifies the x-coordinate of the upper-left corner of the rectangle.

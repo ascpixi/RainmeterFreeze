@@ -6,8 +6,8 @@ namespace RainmeterFreeze.Native.Structures;
 struct MonitorInfo()
 {
     public uint Size = (uint)Marshal.SizeOf<MonitorInfo>();
-    public readonly RECT Monitor;
-    public readonly RECT Work;
+    public readonly Rect Monitor;
+    public readonly Rect Work;
     public readonly MonitorInfoFlags Flags;
 }
 
