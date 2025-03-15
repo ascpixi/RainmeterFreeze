@@ -112,7 +112,7 @@ internal static class User32
     [DllImport("user32.dll")]
     internal static extern nint FindWindow(
         string lpClassName,
-        string lpWindowName
+        string? lpWindowName
     );
 
     /// <summary>

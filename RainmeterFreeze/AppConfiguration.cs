@@ -52,7 +52,7 @@ public class AppConfiguration
     {
         if (File.Exists(ConfigPath)) {
             string json = File.ReadAllText(ConfigPath);
-            return JsonSerializer.Deserialize(json, JsonContext.Default.AppConfiguration);
+            return JsonSerializer.Deserialize(json, JsonContext.Default.AppConfiguration) ?? new();
         }
 
         return new();

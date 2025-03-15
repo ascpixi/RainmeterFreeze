@@ -1,6 +1,5 @@
 ﻿using RainmeterFreeze.Enumerations;
 using H.NotifyIcon.Core;
-using System.Diagnostics;
 
 namespace RainmeterFreeze;
 
@@ -29,7 +28,7 @@ public class ControlTrayIcon
     public ControlTrayIcon()
     {
         trayIcon = new() {
-            Icon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath).Handle,
+            Icon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath ?? "")?.Handle ?? default,
             Visibility = IconVisibility.Visible,
             ToolTip = "RainmeterFreeze",
             ContextMenu = new() {

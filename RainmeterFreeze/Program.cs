@@ -9,25 +9,25 @@ namespace RainmeterFreeze;
 
 static class Program
 {
-    static User32.WinEventDelegate windowChangeHandler;
+    static User32.WinEventDelegate windowChangeHandler = null!;
     static IntPtr windowChangeHookPtr;
-    static ControlTrayIcon trayIcon;
+    static ControlTrayIcon trayIcon = null!;
     static int rainmeterPid = -1; // the current process ID of Rainmeter
 
     /// <summary>
     /// The configuration currently used by the application.
     /// </summary>
-    public static AppConfiguration Configuration;
+    public static AppConfiguration Configuration = null!;
 
     /// <summary>
     /// Occurs when the freeze algorithm of this <see cref="RainmeterFreezeAppContext"/> has changed.
     /// </summary>
-    public static event Action FreezeAlgorithmChanged;
+    public static event Action? FreezeAlgorithmChanged;
 
     /// <summary>
     /// Occurs when the freeze mode of this <see cref="RainmeterFreezeAppContext"/> has changed.
     /// </summary>
-    public static event Action FreezeModeChanged;
+    public static event Action? FreezeModeChanged;
 
     static void Main()
     {
@@ -77,7 +77,7 @@ static class Program
         if (Process.GetProcesses().Any(x =>
             x.Id != thisProcess.Id &&
             x.ProcessName == thisProcess.ProcessName &&
-            x.MainModule.FileName == thisProcess.MainModule.FileName
+            x.MainModule?.FileName == thisProcess.MainModule?.FileName
         )) {
             User32.MessageBox(
                 default,
@@ -97,7 +97,7 @@ static class Program
     public static void SetFreezeAlgorithm(FreezeAlgorithm algorithm)
     {
         Configuration.FreezeAlgorithm = algorithm;
-        FreezeAlgorithmChanged();
+        FreezeAlgorithmChanged?.Invoke();
         Configuration.Save();
     }
 
@@ -112,7 +112,7 @@ static class Program
         }
 
         Configuration.FreezeMode = mode;
-        FreezeModeChanged();
+        FreezeModeChanged?.Invoke();
         Configuration.Save();
 
         if (CheckIfShouldFreeze()) {
