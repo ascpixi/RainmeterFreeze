@@ -174,7 +174,7 @@ static partial class User32
     /// <param name="lpText">The message to be displayed. If the string consists of more than one line, you can separate the lines using a carriage return and/or linefeed character between each line.</param>
     /// <param name="lpCaption">The dialog box title. If this parameter is NULL, the default title is Error.</param>
     /// <param name="type">The contents and behavior of the dialog box.</param>
-    [LibraryImport("user32.dll", StringMarshalling = StringMarshalling.Utf16)]
+    [LibraryImport("user32.dll", EntryPoint = "MessageBoxW", StringMarshalling = StringMarshalling.Utf16)]
     internal static partial DialogResult MessageBox(
         nint hWnd,
         string lpText,
