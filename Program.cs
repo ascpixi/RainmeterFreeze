@@ -166,7 +166,7 @@ static class Program
         Span<char> className = stackalloc char[32];
         User32.GetClassName(hwnd, className);
 
-        switch (className) {
+        switch (className[..className.IndexOf('\0')]) {
             case "WorkerW":
             case "SysListView32":
             case "SHELLDLL_DefView":
