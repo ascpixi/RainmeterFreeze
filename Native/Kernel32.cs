@@ -97,4 +97,12 @@ static partial class Kernel32
     [LibraryImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool CloseHandle(nint handle);
+
+    /// <summary>
+    /// Retrieves a module handle for the specified module. The module must have been loaded by the calling process.
+    /// </summary>
+    /// <param name="lpModuleName">The name of the loaded module (either a .dll or .exe file). If this parameter is NULL, GetModuleHandle returns a handle to the file used to create the calling process (.exe file).</param>
+    /// <returns>If the function succeeds, the return value is a handle to the specified module.</returns>
+    [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16, EntryPoint = "GetModuleHandleW")]
+    internal static partial nint GetModuleHandle(string? lpModuleName);
 }

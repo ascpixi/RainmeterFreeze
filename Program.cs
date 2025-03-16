@@ -1,18 +1,19 @@
 using System.Text.Json;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using RainmeterFreeze.Native;
 using RainmeterFreeze.Enumerations;
 using RainmeterFreeze.Native.Enumerations;
+using RainmeterFreeze.Native.Structures;
 
 namespace RainmeterFreeze;
 
 static class Program
 {
-    static User32.WinEventDelegate windowChangeHandler = null!;
-    static IntPtr windowChangeHookPtr;
+    static HookManager hooks = null!;
     static ControlTrayIcon trayIcon = null!;
-    static int rainmeterPid = -1; // the current process ID of Rainmeter
-    static Thread? hookMsgLoopThread;
+    static Process? rainmeterProcess;
+    static bool isFrozen;
 
     /// <summary>
     /// The path to the application's data folder.
@@ -72,30 +73,62 @@ static class Program
             Configuration.Save();
         }
 
-        hookMsgLoopThread = new Thread(() => {
-            windowChangeHandler = new User32.WinEventDelegate(HandleWindowChanged);
-            windowChangeHookPtr = User32.SetWinEventHook(
-                User32.EventSystemForeground,
-                User32.EventSystemForeground,
-                0,
-                windowChangeHandler,
-                0, 0,
-                User32.WinEventOutOfContext
-            );
+        hooks = new();
+        hooks.ForegroundChanged += static () => {
+            if (!RefreshRainmeterProcess())
+                return;
 
-            while (true) {
-                var msg = new Msg();
-                var result = User32.GetMessage(ref msg, default, 0, 0);
-
-                if (result is 0 or -1)
-                    break;
-
-                User32.TranslateMessage(ref msg);
-                User32.DispatchMessage(ref msg);
+            if (CheckIfShouldFreeze()) {
+                Freeze();
+            } else {
+                Unfreeze();
             }
-        });
+        };
 
-        hookMsgLoopThread.Start();
+        hooks.MouseEvent += static (ref MouseLowLevelHookStruct evPtr) => {
+            // This only concerns the "not on desktop" mode. When the mode is set to "maximized"
+            // or "full-screen", the user can't interact with a frozen Rainmeter skin (because
+            // it'd be obstructed by a full-screen window).
+            if (!isFrozen || Configuration.FreezeAlgorithm != FreezeAlgorithm.NotOnDesktop || !IsRainmeterRunning)
+                return;
+
+            // If the foreground window is maximized, or if it's in full-screen mode,
+            // there is no possible way the user could've clicked a skin.
+            if (User32.IsZoomed(User32.GetForegroundWindow()) || ScreenInfo.IsForegroundFullScreen())
+                return;
+
+            var ev = evPtr; // dereference ref variable from unmanaged memory
+
+            // Rainmeter is frozen right now, and we might have clicked on one of
+            // its skins. If this is the case, spawn a thread to analyze where we
+            // clicked and whether this click intersects any Rainmeter skin.
+            new Thread(() => {
+                bool skinClicked = false;
+
+                foreach (ProcessThread thread in rainmeterProcess.Threads) {
+                    User32.EnumThreadWindows(thread.Id, (hwnd, _) => {
+                        var rect = new Rect();
+                        User32.GetWindowRect(hwnd, ref rect);
+
+                        if (rect.Contains(ev.Pt)) {
+                            // Play it safe - assume we clicked on the skin.
+                            skinClicked = true;
+                            return false; // stop iterating
+                        }
+
+                        return true; // continue iterating
+                    }, default);
+
+                    if (skinClicked) {
+                        break;
+                    }
+                }
+
+                if (skinClicked) {
+                    Unfreeze();
+                }
+            }).Start();
+        };
 
         trayIcon = new ControlTrayIcon();
     }
@@ -138,7 +171,7 @@ static class Program
     /// <param name="mode">The target mode to use.</param>
     public static void SetFreezeMode(FreezeMode mode)
     {
-        if (RefreshRainmeterPid()) {
+        if (RefreshRainmeterProcess()) {
             Unfreeze();
         }
 
@@ -209,97 +242,67 @@ static class Program
 
     static void Freeze()
     {
-        if (!RefreshRainmeterPid())
+        if (!RefreshRainmeterProcess())
             return;
-
-        Debug.WriteLine("Freezing Rainmeter");
 
         switch (Configuration.FreezeMode) {
             case FreezeMode.Suspend: {
-                ProcessManagement.SuspendProcess(rainmeterPid);
+                ProcessManagement.SuspendProcess(rainmeterProcess.Id);
                 break;
             }
             case FreezeMode.LowPriority: {
-                Process.GetProcessById(rainmeterPid).PriorityClass = ProcessPriorityClass.BelowNormal;
+                rainmeterProcess.PriorityClass = ProcessPriorityClass.BelowNormal;
                 break;
             }
             default: throw new UnreachableException();
         }
+
+        isFrozen = true;
     }
 
     static void Unfreeze()
     {
-        if (!RefreshRainmeterPid())
+        if (!RefreshRainmeterProcess())
             return;
-
-        Debug.WriteLine("Unfreezing Rainmeter");
 
         switch (Configuration.FreezeMode) {
             case FreezeMode.Suspend: {
-                ProcessManagement.ResumeProcess(rainmeterPid);
+                ProcessManagement.ResumeProcess(rainmeterProcess.Id);
                 break;
             }
             case FreezeMode.LowPriority: {
-                Process.GetProcessById(rainmeterPid).PriorityClass = ProcessPriorityClass.Normal;
+                rainmeterProcess.PriorityClass = ProcessPriorityClass.Normal;
                 break;
             }
             default: throw new UnreachableException();
         }
+
+        isFrozen = false;
     }
 
-    /// <summary>
-    /// This method will get called every time the active foreground window changes.
-    /// </summary>
-    static void HandleWindowChanged(nint hWinEventHook, uint eventType, nint hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime)
-    {
-        Debug.WriteLine($"{hWinEventHook}, {eventType}, {hwnd}, {idObject}, {idChild}, {dwEventThread}, {dwmsEventTime}");
-
-        if (!RefreshRainmeterPid())
-            return;
-
-        if(CheckIfShouldFreeze()) {
-            Freeze();
-        } else {
-            Unfreeze();
-        }
-    }
-
-    /// <summary>
-    /// Returns a value indicating whether the currently stored Rainmeter
-    /// process ID is valid.
-    /// </summary>
-    static bool ValidateRainmeterPid()
-    {
-        if (rainmeterPid == -1)
-            return false;
-
-        try {
-            var process = Process.GetProcessById(rainmeterPid);
-            return !process.HasExited && process.ProcessName == "Rainmeter";
-        } catch (ArgumentException) {
-            return false;
-        }
-    }
+    [MemberNotNullWhen(true, nameof(rainmeterProcess))]
+    static bool IsRainmeterRunning => rainmeterProcess != null && !rainmeterProcess.HasExited;
 
     /// <summary>
     /// Refreshes the stored Rainmeter process ID, if necessary.
     /// </summary>
     /// <returns>'true' if the process ID was successfully fetched, or if a refresh is not required at the given time.</returns>
-    static bool RefreshRainmeterPid()
+    [MemberNotNullWhen(true, nameof(rainmeterProcess))]
+    static bool RefreshRainmeterProcess()
     {
-        if (ValidateRainmeterPid())
+        if (IsRainmeterRunning)
             return true;
 
         var processes = Process.GetProcessesByName("Rainmeter");
 
         if (processes.Length == 0) {
             // We couldn't find any Rainmeter processes...
-            rainmeterPid = -1;
+            rainmeterProcess = null;
             return false;
         }
 
         // At least one Rainmeter process has been found
-        rainmeterPid = processes[0].Id;
+        rainmeterProcess = processes[0];
         return true;
     }
 
@@ -309,10 +312,10 @@ static class Program
     public static void Exit()
     {
         trayIcon.Icon.Dispose();
-        User32.UnhookWinEvent(windowChangeHookPtr);
+        hooks.Dispose();
 
-        if (ValidateRainmeterPid()) {
-            ProcessManagement.ResumeProcess(rainmeterPid);
+        if (IsRainmeterRunning) {
+            ProcessManagement.ResumeProcess(rainmeterProcess.Id);
         }
 
         Environment.Exit(0);

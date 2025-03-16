@@ -1,5 +1,4 @@
-﻿using System.Text;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using RainmeterFreeze.Native.Structures;
 using RainmeterFreeze.Native.Enumerations;
 
@@ -23,7 +22,7 @@ static partial class User32
     /// <param name="idObject">Identifies the object associated with the event. This is one of the object identifiers or a custom object ID.</param>
     /// <param name="idChild">Identifies whether the event was triggered by an object or a child element of the object. If this value is CHILDID_SELF, the event was triggered by the object; otherwise, this value is the child ID of the element that triggered the event.</param>
     /// <param name="dwmsEventTime">Specifies the time, in milliseconds, that the event was generated.</param>
-    internal delegate void WinEventDelegate(
+    public delegate void WinEventDelegate(
         nint hWinEventHook,
         uint eventType,
         nint hwnd,
@@ -36,13 +35,35 @@ static partial class User32
     /// <summary>
     /// The callback function is not mapped into the address space of the process that generates the event. Because the hook function is called across process boundaries, the system must queue events. Although this method is asynchronous, events are guaranteed to be in sequential order. 
     /// </summary>
-    internal const uint WinEventOutOfContext = 0;
+    public const uint WinEventOutOfContext = 0;
 
     /// <summary>
     /// The foreground window has changed. The system sends this event even if the foreground window has changed to another window in the same thread. Server applications never send this event.
     /// For this event, the WinEventProc callback function's hwnd parameter is the handle to the window that is in the foreground, the idObject parameter is OBJID_WINDOW, and the idChild parameter is CHILDID_SELF.
     /// </summary>
-    internal const uint EventSystemForeground = 3;
+    public const uint EventSystemForeground = 3;
+
+    /// <summary>
+    /// A window object is about to be minimized.
+    /// </summary>
+    public const uint EventSystemMinimizeStart = 0x0016;
+
+    /// <summary>
+    /// The window itself rather than a child object.
+    /// </summary>
+    public const uint ObjIdWindow = 0x00000000;
+
+    /// <summary>
+    /// An object has been destroyed. The system sends this event for the following user interface elements: caret, header control, list-view control, tab control, toolbar control, tree view control, and window object. Server applications send this event for their accessible objects.
+    /// Clients assume that all of an object's children are destroyed when the parent object sends this event.
+    /// After receiving this event, clients do not call an object's IAccessible properties or methods. However, the interface pointer must remain valid as long as there is a reference count on it (due to COM rules), but the UI element may no longer be present. Further calls on the interface pointer may return failure errors; to prevent this, servers create proxy objects and monitor their life spans.
+    /// </summary>
+    public const uint EventObjectDestroy = 0x8001;
+
+    /// <summary>
+    /// Posted to a window when the cursor moves. If the mouse is not captured, the message is posted to the window that contains the cursor. Otherwise, the message is posted to the window that has captured the mouse.
+    /// </summary>
+    public const uint WmMouseMove = 0x0200;
 
     /// <summary>
     /// Sets an event hook function for a range of events.
@@ -56,7 +77,7 @@ static partial class User32
     /// <param name="dwFlags">Flag values that specify the location of the hook function and of the events to be skipped.</param>
     /// <returns></returns>
     [LibraryImport("user32.dll")]
-    internal static partial nint SetWinEventHook(
+    public static partial nint SetWinEventHook(
         uint eventMin,
         uint eventMax,
         nint hmodWinEventProc,
@@ -73,7 +94,7 @@ static partial class User32
     /// <returns>If successful, returns TRUE; otherwise, returns FALSE.</returns>
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    internal static partial bool UnhookWinEvent(nint hWinEventHook);
+    public static partial bool UnhookWinEvent(nint hWinEventHook);
 
     /// <summary>
     /// Retrieves a handle to the foreground window (the window with which the
@@ -82,7 +103,7 @@ static partial class User32
     /// </summary>
     /// <returns>The return value is a handle to the foreground window. The foreground window can be NULL in certain circumstances, such as when a window is losing activation.</returns>
     [LibraryImport("user32.dll")]
-    internal static partial nint GetForegroundWindow();
+    public static partial nint GetForegroundWindow();
 
     /// <summary>
     /// Retrieves a handle to the desktop window. The desktop window
@@ -91,14 +112,14 @@ static partial class User32
     /// </summary>
     /// <returns>The return value is a handle to the desktop window.</returns>
     [LibraryImport("user32.dll")]
-    internal static partial nint GetDesktopWindow();
+    public static partial nint GetDesktopWindow();
 
     /// <summary>
     /// Retrieves a handle to the Shell's desktop window.
     /// </summary>
     /// <returns>The return value is the handle of the Shell's desktop window. If no Shell process is present, the return value is NULL.</returns>
     [LibraryImport("user32.dll")]
-    internal static partial nint GetShellWindow();
+    public static partial nint GetShellWindow();
 
     /// <summary>
     /// Retrieves a handle to the top-level window whose class name and window name match the specified strings. This function does not search child windows.
@@ -108,7 +129,7 @@ static partial class User32
     /// <param name="lpWindowName">The window name (the window's title). If this parameter is NULL, all window names match.</param>
     /// <returns>If the function succeeds, the return value is a handle to the window that has the specified class name and window name. If the function fails, the return value is NULL.</returns>
     [LibraryImport("user32.dll", EntryPoint = "FindWindowW", StringMarshalling = StringMarshalling.Utf16)]
-    internal static partial nint FindWindow(
+    public static partial nint FindWindow(
         string lpClassName,
         string? lpWindowName
     );
@@ -126,7 +147,7 @@ static partial class User32
     /// <param name="hWnd">A handle to the window and, indirectly, the class to which the window belongs.</param>
     /// <param name="lpClassName">The class name string.</param>
     /// <returns>If the function succeeds, the return value is the number of characters copied to the buffer, not including the terminating null character. If the function fails, the return value is zero.</returns>
-    internal static unsafe int GetClassName(nint hWnd, Span<char> lpClassName)
+    public static unsafe int GetClassName(nint hWnd, Span<char> lpClassName)
     {
         fixed (char* ptr = lpClassName) {
             return GetClassName(hWnd, ptr, lpClassName.Length - 1);
@@ -142,7 +163,7 @@ static partial class User32
     /// <param name="processId">A pointer to a variable that receives the process identifier. If this parameter is not NULL, GetWindowThreadProcessId copies the identifier of the process to the variable; otherwise, it does not.</param>
     /// <returns>The return value is the identifier of the thread that created the window.</returns>
     [LibraryImport("user32.dll", SetLastError = true)]
-    internal static partial uint GetWindowThreadProcessId(
+    public static partial uint GetWindowThreadProcessId(
         nint hWnd,
         out uint processId
     );
@@ -153,7 +174,7 @@ static partial class User32
     /// <param name="hWnd">A handle to the window to be tested.</param>
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    internal static partial bool IsZoomed(nint hWnd);
+    public static partial bool IsZoomed(nint hWnd);
 
     /// <summary>
     /// Retrieves the dimensions of the bounding rectangle of the specified
@@ -165,7 +186,7 @@ static partial class User32
     /// <returns>If the function succeeds, the return value is nonzero. If the function fails, the return value is zero.</returns>
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    internal static partial bool GetWindowRect(nint hWnd, ref Rect rect);
+    public static partial bool GetWindowRect(nint hWnd, ref Rect rect);
 
     /// <summary>
     /// Displays a modal dialog box that contains a system icon, a set of buttons, and a brief application-specific message, such as status or error information. The message box returns an integer value that indicates which button the user clicked.
@@ -175,7 +196,7 @@ static partial class User32
     /// <param name="lpCaption">The dialog box title. If this parameter is NULL, the default title is Error.</param>
     /// <param name="type">The contents and behavior of the dialog box.</param>
     [LibraryImport("user32.dll", EntryPoint = "MessageBoxW", StringMarshalling = StringMarshalling.Utf16)]
-    internal static partial DialogResult MessageBox(
+    public static partial DialogResult MessageBox(
         nint hWnd,
         string lpText,
         string lpCaption,
@@ -188,7 +209,7 @@ static partial class User32
     /// <param name="hwnd">A handle to the window of interest.</param>
     /// <param name="dwFlags">Determines the function's return value if the window does not intersect any display monitor.</param>
     [LibraryImport("user32.dll")]
-    internal static partial nint MonitorFromWindow(
+    public static partial nint MonitorFromWindow(
         nint hwnd,
         MonitorFromWindowFlags dwFlags
     );
@@ -200,7 +221,7 @@ static partial class User32
     /// <param name="lpmi">A pointer to a MONITORINFO or MONITORINFOEX structure that receives information about the specified display monitor.</param>
     [LibraryImport("user32.dll", EntryPoint = "GetMonitorInfoW")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    internal static partial bool GetMonitorInfo(
+    public static partial bool GetMonitorInfo(
         nint hMonitor,
         ref MonitorInfo lpmi
     );
@@ -214,7 +235,7 @@ static partial class User32
     /// <param name="wMsgFilterMax">The integer value of the highest message value to be retrieved.</param>
     /// <returns>If the function retrieves a message other than WM_QUIT, the return value is nonzero.</returns>
     [LibraryImport("user32.dll", EntryPoint = "GetMessageW")]
-    internal static partial int GetMessage(
+    public static partial int GetMessage(
         ref Msg lpMsg,
         nint hWnd,
         uint wMsgFilterMin,
@@ -227,7 +248,7 @@ static partial class User32
     /// <param name="lpMsg">A pointer to a structure that contains the message.</param>
     /// <returns>The return value specifies the value returned by the window procedure. Although its meaning depends on the message being dispatched, the return value generally is ignored.</returns>
     [LibraryImport("user32.dll", EntryPoint = "DispatchMessageW")]
-    internal static partial nint DispatchMessage(ref Msg lpMsg);
+    public static partial nint DispatchMessage(ref Msg lpMsg);
 
     /// <summary>
     /// Translates virtual-key messages into character messages. The character messages are posted to the calling thread's message queue, to be read the next time the thread calls the GetMessage or PeekMessage function.
@@ -235,7 +256,69 @@ static partial class User32
     /// <param name="lpMsg">A pointer to an MSG structure that contains message information retrieved from the calling thread's message queue by using the GetMessage or PeekMessage function.</param>
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    internal static partial bool TranslateMessage(ref Msg lpMsg);
+    public static partial bool TranslateMessage(ref Msg lpMsg);
+
+    public delegate bool EnumThreadDelegate(nint hWnd, nint lParam);
+
+    /// <summary>
+    /// Enumerates all nonchild windows associated with a thread by passing the handle to each window, in turn, to an application-defined callback function. EnumThreadWindows continues until the last window is enumerated or the callback function returns FALSE. To enumerate child windows of a particular window, use the EnumChildWindows function.
+    /// </summary>
+    /// <param name="dwThreadId">The identifier of the thread whose windows are to be enumerated.</param>
+    /// <param name="lpfn">A pointer to an application-defined callback function. For more information, see EnumThreadWndProc.</param>
+    /// <param name="lParam">An application-defined value to be passed to the callback function.</param>
+    /// <returns>If the callback function returns TRUE for all windows in the thread specified by dwThreadId, the return value is TRUE. If the callback function returns FALSE on any enumerated window, or if there are no windows found in the thread specified by dwThreadId, the return value is FALSE.</returns>
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool EnumThreadWindows(
+        int dwThreadId,
+        EnumThreadDelegate lpfn,
+        nint lParam
+    );
+
+    // We can't use Func<...> here, unfortunately! :(
+    // See https://github.com/dotnet/runtime/issues/113590 for more info.
+    public delegate nint HookProc(int code, nuint wParam, nint lParam);
+
+    /// <summary>
+    /// Installs an application-defined hook procedure into a hook chain. You would install a hook procedure to monitor the system for certain types of events. These events are associated either with a specific thread or with all threads in the same desktop as the calling thread.
+    /// </summary>
+    /// <param name="idHook">The type of hook procedure to be installed.</param>
+    /// <param name="lpfn">A pointer to the hook procedure. If the dwThreadId parameter is zero or specifies the identifier of a thread created by a different process, the lpfn parameter must point to a hook procedure in a DLL. Otherwise, lpfn can point to a hook procedure in the code associated with the current process.</param>
+    /// <param name="hmod">A handle to the DLL containing the hook procedure pointed to by the lpfn parameter. The hMod parameter must be set to NULL if the dwThreadId parameter specifies a thread created by the current process and if the hook procedure is within the code associated with the current process.</param>
+    /// <param name="dwThreadId">The identifier of the thread with which the hook procedure is to be associated. For desktop apps, if this parameter is zero, the hook procedure is associated with all existing threads running in the same desktop as the calling thread.</param>
+    /// <returns>If the function succeeds, the return value is the handle to the hook procedure.</returns>
+    [LibraryImport("user32.dll", EntryPoint = "SetWindowsHookExW")]
+    public static partial nint SetWindowsHookEx(
+        WindowsHookType idHook,
+        HookProc lpfn,
+        nint hmod,
+        uint dwThreadId
+    );
+
+    /// <summary>
+    /// Passes the hook information to the next hook procedure in the current hook chain. A hook procedure can call this function either before or after processing the hook information.
+    /// </summary>
+    /// <param name="hhk">This parameter is ignored.</param>
+    /// <param name="nCode">The hook code passed to the current hook procedure. The next hook procedure uses this code to determine how to process the hook information.</param>
+    /// <param name="wParam">The wParam value passed to the current hook procedure. The meaning of this parameter depends on the type of hook associated with the current hook chain.</param>
+    /// <param name="lParam">The lParam value passed to the current hook procedure. The meaning of this parameter depends on the type of hook associated with the current hook chain.</param>
+    /// <returns>This value is returned by the next hook procedure in the chain. The current hook procedure must also return this value. The meaning of the return value depends on the hook type. For more information, see the descriptions of the individual hook procedures.</returns>
+    [LibraryImport("user32.dll")]
+    public static partial nint CallNextHookEx(
+        nint hhk,
+        int nCode,
+        nuint wParam,
+        nint lParam
+    );
+
+    /// <summary>
+    /// Removes a hook procedure installed in a hook chain by the SetWindowsHookEx function.
+    /// </summary>
+    /// <param name="hhk">A handle to the hook to be removed. This parameter is a hook handle obtained by a previous call to SetWindowsHookEx.</param>
+    /// <returns>If the function succeeds, the return value is nonzero.</returns>
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool UnhookWindowsHookEx(nint hhk);
 }
 
 enum MonitorFromWindowFlags

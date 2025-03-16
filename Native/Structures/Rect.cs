@@ -28,4 +28,17 @@ internal struct Rect
     /// Specifies the y-coordinate of the lower-right corner of the rectangle.
     /// </summary>
     internal int Bottom;
+
+    /// <summary>
+    /// Returns 'true' when this rectangle contains the given point.
+    /// </summary>
+    public readonly bool Contains(int x, int y)
+        => x >= Left && x <= Right && y >= Top && y <= Bottom;
+
+    /// <summary>
+    /// Equivalent to 'Contains(p.X, p.Y)'.
+    /// </summary>
+    public readonly bool Contains(Point p) => Contains(p.X, p.Y);
+
+    public override readonly string ToString() => $"({Left}, {Top}, {Right}, {Bottom})";
 }
