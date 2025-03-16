@@ -198,12 +198,44 @@ static partial class User32
     /// </summary>
     /// <param name="hMonitor">A handle to the display monitor of interest.</param>
     /// <param name="lpmi">A pointer to a MONITORINFO or MONITORINFOEX structure that receives information about the specified display monitor.</param>
-    [LibraryImport("user32.dll", EntryPoint = "GetMonitorInfoA")]
+    [LibraryImport("user32.dll", EntryPoint = "GetMonitorInfoW")]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool GetMonitorInfo(
         nint hMonitor,
         ref MonitorInfo lpmi
     );
+
+    /// <summary>
+    /// Retrieves a message from the calling thread's message queue. The function dispatches incoming sent messages until a posted message is available for retrieval.
+    /// </summary>
+    /// <param name="lpMsg">A pointer to an MSG structure that receives message information from the thread's message queue.</param>
+    /// <param name="hWnd">A handle to the window whose messages are to be retrieved. The window must belong to the current thread.</param>
+    /// <param name="wMsgFilterMin">The integer value of the lowest message value to be retrieved.</param>
+    /// <param name="wMsgFilterMax">The integer value of the highest message value to be retrieved.</param>
+    /// <returns>If the function retrieves a message other than WM_QUIT, the return value is nonzero.</returns>
+    [LibraryImport("user32.dll", EntryPoint = "GetMessageW")]
+    internal static partial int GetMessage(
+        ref Msg lpMsg,
+        nint hWnd,
+        uint wMsgFilterMin,
+        uint wMsgFilterMax
+    );
+
+    /// <summary>
+    /// Dispatches a message to a window procedure. It is typically used to dispatch a message retrieved by the GetMessage function.
+    /// </summary>
+    /// <param name="lpMsg">A pointer to a structure that contains the message.</param>
+    /// <returns>The return value specifies the value returned by the window procedure. Although its meaning depends on the message being dispatched, the return value generally is ignored.</returns>
+    [LibraryImport("user32.dll", EntryPoint = "DispatchMessageW")]
+    internal static partial nint DispatchMessage(ref Msg lpMsg);
+
+    /// <summary>
+    /// Translates virtual-key messages into character messages. The character messages are posted to the calling thread's message queue, to be read the next time the thread calls the GetMessage or PeekMessage function.
+    /// </summary>
+    /// <param name="lpMsg">A pointer to an MSG structure that contains message information retrieved from the calling thread's message queue by using the GetMessage or PeekMessage function.</param>
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool TranslateMessage(ref Msg lpMsg);
 }
 
 enum MonitorFromWindowFlags

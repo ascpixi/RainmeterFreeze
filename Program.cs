@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json;
 using System.Diagnostics;
 using RainmeterFreeze.Native;
@@ -13,6 +12,17 @@ static class Program
     static IntPtr windowChangeHookPtr;
     static ControlTrayIcon trayIcon = null!;
     static int rainmeterPid = -1; // the current process ID of Rainmeter
+    static Thread? hookMsgLoopThread;
+
+    /// <summary>
+    /// The path to the application's data folder.
+    /// </summary>
+    public readonly static string DataFolderPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "RainmeterFreeze"
+    );
+    
+    readonly static string StacktraceLogPath = Path.Combine(DataFolderPath, "stacktrace.log");
 
     /// <summary>
     /// The configuration currently used by the application.
@@ -36,7 +46,6 @@ static class Program
         Directory.CreateDirectory(DataFolderPath);
 
         PerformAlreadyRunningCheck();
-
 
         try {
             Configuration = AppConfiguration.Load();
@@ -63,15 +72,30 @@ static class Program
             Configuration.Save();
         }
 
-        windowChangeHandler = new User32.WinEventDelegate(HandleWindowChanged);
-        windowChangeHookPtr = User32.SetWinEventHook(
-            User32.EventSystemForeground,
-            User32.EventSystemForeground,
-            0,
-            windowChangeHandler,
-            0, 0,
-            User32.WinEventOutOfContext
-        );
+        hookMsgLoopThread = new Thread(() => {
+            windowChangeHandler = new User32.WinEventDelegate(HandleWindowChanged);
+            windowChangeHookPtr = User32.SetWinEventHook(
+                User32.EventSystemForeground,
+                User32.EventSystemForeground,
+                0,
+                windowChangeHandler,
+                0, 0,
+                User32.WinEventOutOfContext
+            );
+
+            while (true) {
+                var msg = new Msg();
+                var result = User32.GetMessage(ref msg, default, 0, 0);
+
+                if (result is 0 or -1)
+                    break;
+
+                User32.TranslateMessage(ref msg);
+                User32.DispatchMessage(ref msg);
+            }
+        });
+
+        hookMsgLoopThread.Start();
 
         trayIcon = new ControlTrayIcon();
     }
@@ -188,6 +212,8 @@ static class Program
         if (!RefreshRainmeterPid())
             return;
 
+        Debug.WriteLine("Freezing Rainmeter");
+
         switch (Configuration.FreezeMode) {
             case FreezeMode.Suspend: {
                 ProcessManagement.SuspendProcess(rainmeterPid);
@@ -205,6 +231,8 @@ static class Program
     {
         if (!RefreshRainmeterPid())
             return;
+
+        Debug.WriteLine("Unfreezing Rainmeter");
 
         switch (Configuration.FreezeMode) {
             case FreezeMode.Suspend: {
@@ -224,6 +252,8 @@ static class Program
     /// </summary>
     static void HandleWindowChanged(nint hWinEventHook, uint eventType, nint hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime)
     {
+        Debug.WriteLine($"{hWinEventHook}, {eventType}, {hwnd}, {idObject}, {idChild}, {dwEventThread}, {dwmsEventTime}");
+
         if (!RefreshRainmeterPid())
             return;
 
@@ -287,16 +317,6 @@ static class Program
 
         Environment.Exit(0);
     }
-
-    /// <summary>
-    /// The path to the application's data folder.
-    /// </summary>
-    public readonly static string DataFolderPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "RainmeterFreeze"
-    );
-    
-    readonly static string StacktraceLogPath = Path.Combine(DataFolderPath, "stacktrace.log");
 
     static void GlobalExceptionHandler(object sender, UnhandledExceptionEventArgs e)
     {
