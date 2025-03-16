@@ -196,7 +196,7 @@ static class Program
             return false;
         }
 
-        Span<char> className = stackalloc char[32];
+        Span<char> className = stackalloc char[48];
         User32.GetClassName(hwnd, className);
 
         switch (className[..className.IndexOf('\0')]) {
@@ -205,6 +205,7 @@ static class Program
             case "SHELLDLL_DefView":
             // Do not freeze when interacting with the system tray
             case "NotifyIconOverflowWindow":
+            case "TopLevelWindowForOverflowXamlIsland":
             case "RainmeterTrayClass":
                 return false;
         }
