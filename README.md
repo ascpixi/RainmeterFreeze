@@ -3,8 +3,6 @@
 <p align="center"><a href="https://github.com/ascpixi/RainmeterFreeze/releases/latest/download/RainmeterFreeze.exe"><code>click here to download the latest release!</code></a></p>
 
 ## 💻 Setup
-In order to run RainmeterFreeze, you'll need .NET Core 3.1 (or higher) - you probably already have it installed, but if you don't, you can get it from here: <a href="https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-3.1.24-windows-x64-installer">64-bit</a> | <a href="https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-3.1.24-windows-x86-installer">32-bit</a>
-
 RainmeterFreeze doesn't require any installation - simply run the .exe file! If you want, you can also move the .exe into your Startup folder so that it starts alongside Rainmeter:
 - Press `WIN` + `R`
 - Type in "`shell:startup`" and press Enter
